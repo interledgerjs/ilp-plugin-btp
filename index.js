@@ -6,6 +6,7 @@ const crypto = require('crypto')
 const EventEmitter = require('events').EventEmitter
 const URL = require('url').URL
 const WebSocket = require('ws')
+const WebSocketReconnector = require('./ws-reconnect')
 const BtpPacket = require('btp-packet')
 
 const { protocolDataToIlpAndCustom, ilpAndCustomToProtocolData } =
@@ -95,6 +96,7 @@ class AbstractBtpPlugin extends EventEmitter {
         ws.once('message', async (binaryAuthMessage) => {
           try {
             authPacket = BtpPacket.deserialize(binaryAuthMessage)
+            debug('got auth packet', JSON.stringify(authPacket))
             assert.equal(authPacket.type, BtpPacket.TYPE_MESSAGE, 'First message sent over BTP connection must be auth packet')
             assert(authPacket.data.protocolData.length >= 2, 'Auth packet must have auth and auth_token subprotocols')
             assert.equal(authPacket.data.protocolData[0].protocolName, 'auth', 'First subprotocol must be auth')
@@ -107,8 +109,9 @@ class AbstractBtpPlugin extends EventEmitter {
                 }
 
                 if (this._incomingWs) {
-                  throw new Error('only one incoming connection is allowed')
+                  this._closeIncomingSocket(this._incomingWs)
                 }
+
                 this._incomingWs = ws
               }
             }
@@ -116,7 +119,7 @@ class AbstractBtpPlugin extends EventEmitter {
             assert(token, 'auth_token subprotocol is required')
             ws.send(BtpPacket.serializeResponse(authPacket.requestId, []))
           } catch (err) {
-            this.incomingWs = null
+            this._incomingWs = null
             if (authPacket) {
               const errorResponse = BtpPacket.serializeError({
                 code: 'F00',
@@ -132,6 +135,7 @@ class AbstractBtpPlugin extends EventEmitter {
 
           debug('connection authenticated')
           ws.on('message', this._handleIncomingWsMessage.bind(this, ws))
+          this.emit('connect')
         })
       })
     }
@@ -140,7 +144,8 @@ class AbstractBtpPlugin extends EventEmitter {
       const parsedServer = new URL(this._server)
       const host = parsedServer.host // TODO: include path
       const secret = parsedServer.password
-      this._ws = new WebSocket('ws://' + host) // TODO: wss
+      this._ws = new WebSocketReconnector()
+
       const protocolData = [{
         protocolName: 'auth',
         contentType: BtpPacket.MIME_APPLICATION_OCTET_STREAM,
@@ -155,31 +160,50 @@ class AbstractBtpPlugin extends EventEmitter {
         data: Buffer.from(secret, 'utf8')
       }]
 
-      await new Promise((resolve, reject) => {
-        this._ws.on('open', async () => {
-          debug('connected to server')
-
-          await this._call(null, {
-            type: BtpPacket.TYPE_MESSAGE,
-            requestId: await _requestId(),
-            data: { protocolData }
-          })
-
-          resolve()
+      this._ws.on('open', async () => {
+        debug('connected to server')
+        await this._call(null, {
+          type: BtpPacket.TYPE_MESSAGE,
+          requestId: await _requestId(),
+          data: { protocolData }
         })
-
-        this._ws.on('message', this._handleIncomingWsMessage.bind(this, this._ws))
+        this.emit('connect')
       })
+
+      this._ws.on('message', this._handleIncomingWsMessage.bind(this, this._ws))
+      await this._ws.open('ws://' + host) // TODO: wss
     }
 
     if (this._connect) {
       await this._connect()
     }
 
+    await new Promise((resolve, reject) => {
+      this.once('connect', resolve)
+      this.once('disconnect', reject)
+    })
     this._connected = true
   }
 
+  async _closeIncomingSocket (socket) {
+    socket.removeAllListeners()
+    socket.once('message', () => {
+      try {
+        ws.send(BtpPacket.serializeError({
+          code: 'F00',
+          name: 'NotAcceptedError',
+          data: 'This connection has been ended',
+          triggeredAt: new Date().toISOString()
+        }, authPacket.requestId, []))
+      } catch (e) {
+        debug('error responding on closed socket', e)
+      }
+      socket.close()
+    })
+  }
+
   async disconnect () {
+    this.emit('disconnect', new Error('connection aborted'))
     if (this._disconnect) {
       await this._disconnect()
     }
@@ -385,7 +409,7 @@ class AbstractBtpPlugin extends EventEmitter {
     const ws = this._ws || this._incomingWs
 
     try {
-      await new Promise(resolve => ws.send(BtpPacket.serialize(btpPacket), resolve))
+      await new Promise((resolve) => ws.send(BtpPacket.serialize(btpPacket), resolve))
     } catch (e) {
       debug('unable to send btp message to client: ' + e.message, 'btp packet:', JSON.stringify(btpPacket))
     }
