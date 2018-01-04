@@ -68,9 +68,10 @@ function jsErrorToBtpError (e) {
  */
 
 class AbstractBtpPlugin extends EventEmitter {
-  constructor ({ listener, server }) {
+  constructor ({ listener, server, reconnectInterval }) {
     super()
 
+    this._reconnectInterval = reconnectInterval // optional
     this._dataHandler = null
     this._moneyHandler = null
     this._connected = false
@@ -96,7 +97,7 @@ class AbstractBtpPlugin extends EventEmitter {
         ws.once('message', async (binaryAuthMessage) => {
           try {
             authPacket = BtpPacket.deserialize(binaryAuthMessage)
-            debug('got auth packet', JSON.stringify(authPacket))
+            debug('got auth packet. packet=%j', authPacket)
             assert.equal(authPacket.type, BtpPacket.TYPE_MESSAGE, 'First message sent over BTP connection must be auth packet')
             assert(authPacket.data.protocolData.length >= 2, 'Auth packet must have auth and auth_token subprotocols')
             assert.equal(authPacket.data.protocolData[0].protocolName, 'auth', 'First subprotocol must be auth')
@@ -144,7 +145,7 @@ class AbstractBtpPlugin extends EventEmitter {
       const parsedServer = new URL(this._server)
       const host = parsedServer.host // TODO: include path
       const secret = parsedServer.password
-      this._ws = new WebSocketReconnector()
+      this._ws = new WebSocketReconnector({ interval: this._reconnectInterval })
 
       const protocolData = [{
         protocolName: 'auth',
@@ -180,7 +181,8 @@ class AbstractBtpPlugin extends EventEmitter {
 
     await new Promise((resolve, reject) => {
       this.once('connect', resolve)
-      this.once('disconnect', reject)
+      this.once('disconnect', () =>
+        void reject(new Error('connection aborted')))
     })
     this._connected = true
   }
@@ -192,7 +194,7 @@ class AbstractBtpPlugin extends EventEmitter {
         ws.send(BtpPacket.serializeError({
           code: 'F00',
           name: 'NotAcceptedError',
-          data: 'This connection has been ended',
+          data: 'This connection has been ended because the user has opened a new connection',
           triggeredAt: new Date().toISOString()
         }, authPacket.requestId, []))
       } catch (e) {
@@ -203,7 +205,7 @@ class AbstractBtpPlugin extends EventEmitter {
   }
 
   async disconnect () {
-    this.emit('disconnect', new Error('connection aborted'))
+    this.emit('disconnect')
     if (this._disconnect) {
       await this._disconnect()
     }

@@ -3,10 +3,10 @@ const debug = require('debug')('websocket-wrapper')
 const EventEmitter2 = require('eventemitter2')
 const DEFAULT_RECONNECT_INTERVAL = 5000
 
-class WebSocketWrapper extends EventEmitter2 {
-  constructor () {
+class WebSocketReconnector extends EventEmitter2 {
+  constructor ({ interval }) {
     super()
-    this._interval = 5000
+    this._interval = interval || 5000
   }
 
   open (url) {
@@ -38,4 +38,4 @@ class WebSocketWrapper extends EventEmitter2 {
   }
 }
 
-module.exports = WebSocketWrapper
+module.exports = WebSocketReconnector
