@@ -4,7 +4,8 @@
   "description": "Generic BTP plugin for ILP",
   "main": "index.js",
   "scripts": {
-    "test": "DEBUG=ilp* node test/scripts/test.js",
+    "example": "DEBUG=ilp* node test/scripts/test.js",
+    "test": "istanbul test -- _mocha test/indexSpec.js",
     "lint": "eslint ."
   },
   "author": "",
@@ -14,15 +15,22 @@
     "btp-packet": "^1.2.0",
     "debug": "^3.1.0",
     "eventemitter2": "^5.0.0",
+    "node-fetch": "^1.7.3",
     "ws": "^3.3.3"
   },
   "devDependencies": {
+    "chai": "^4.1.2",
+    "chai-as-promised": "^7.1.1",
+    "co-mocha": "^1.2.1",
     "eslint": "^4.14.0",
     "eslint-config-standard": "^11.0.0-beta.0",
     "eslint-plugin-import": "^2.8.0",
     "eslint-plugin-node": "^5.2.1",
     "eslint-plugin-promise": "^3.6.0",
     "eslint-plugin-standard": "^3.0.1",
-    "ilp-packet": "^2.1.2"
+    "ilp-packet": "^2.1.2",
+    "istanbul": "^0.4.5",
+    "mocha": "^4.1.0",
+    "nock": "^9.1.6"
   }
 }

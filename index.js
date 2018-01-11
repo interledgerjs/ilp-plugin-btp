@@ -11,6 +11,7 @@ const BtpPacket = require('btp-packet')
 
 const { protocolDataToIlpAndCustom, ilpAndCustomToProtocolData } =
   require('./protocol-data-converter')
+const { isPassCompromised } = require('./src/lib/util')
 
 const DEFAULT_TIMEOUT = 35000
 const namesToCodes = {
@@ -145,6 +146,8 @@ class AbstractBtpPlugin extends EventEmitter {
       const parsedServer = new URL(this._server)
       const host = parsedServer.host // TODO: include path
       const secret = parsedServer.password
+      if (await isPassCompromised(secret)) throw new Error('Your password is compromised. Choose a strong, random password.')
+
       this._ws = new WebSocketReconnector({ interval: this._reconnectInterval })
 
       const protocolData = [{

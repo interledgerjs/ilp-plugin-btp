@@ -16,7 +16,7 @@ const ObjStore = require('./helpers/objStore')
 const PluginPaymentChannel = require('..')
 const MockSocket = require('./helpers/mockSocket')
 const { protocolDataToIlpAndCustom, ilpAndCustomToProtocolData } =
-  require('../src/util/protocolDataConverter')
+  require('../protocol-data-converter')
 
 const info = {
   prefix: 'example.red.',
