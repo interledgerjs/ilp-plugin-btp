@@ -7,7 +7,7 @@ const ObjStore = require('./helpers/objStore')
 const PluginPaymentChannel = require('..')
 const MockSocket = require('./helpers/mockSocket')
 const { protocolDataToIlpAndCustom } =
-  require('../src/util/protocolDataConverter')
+  require('../protocol-data-converter')
 
 const options = {
   server: 'btp+wss://user:placeholder@example.com/rpc',
