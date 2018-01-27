@@ -4,8 +4,8 @@ const assert = require('assert')
 const debug = require('debug')('ilp-plugin-btp')
 const crypto = require('crypto')
 const EventEmitter = require('events').EventEmitter
-const URL = require('url').URL
-const WebSocket = require('ws')
+const URL = process.browser ? window.URL : require('url').URL
+const WebSocketServer = require('simple-websocket/server')
 const WebSocketReconnector = require('./ws-reconnect')
 const BtpPacket = require('btp-packet')
 
@@ -86,7 +86,7 @@ class AbstractBtpPlugin extends EventEmitter {
     }
 
     if (this._listener) {
-      const wss = this._wss = new WebSocket.Server({ port: this._listener.port })
+      const wss = this._wss = new WebSocketServer({ port: this._listener.port })
       this._incomingWs = null
 
       wss.on('connection', (ws) => {
@@ -94,7 +94,12 @@ class AbstractBtpPlugin extends EventEmitter {
         let authPacket
         let token
 
-        ws.once('message', async (binaryAuthMessage) => {
+        ws.on('error', (err) => {
+          debug('connection terminated')
+          ws.destroy()
+        })
+
+        ws.once('data', async (binaryAuthMessage) => {
           try {
             authPacket = BtpPacket.deserialize(binaryAuthMessage)
             debug('got auth packet. packet=%j', authPacket)
@@ -130,25 +135,26 @@ class AbstractBtpPlugin extends EventEmitter {
               }, authPacket.requestId, [])
               ws.send(errorResponse)
             }
-            ws.close()
+            ws.destroy()
             return
           }
 
           debug('connection authenticated')
-          ws.on('message', this._handleIncomingWsMessage.bind(this, ws))
+          ws.on('data', this._handleIncomingWsMessage.bind(this, ws))
           this.emit('connect')
         })
       })
     }
 
     if (this._server) {
-      const parsedBtpUri = new URL(this._server)
-      const account = parsedBtpUri.username
-      const token = parsedBtpUri.password
-
-      if (!parsedBtpUri.protocol.startsWith('btp+')) {
+      if (!this._server.startsWith('btp+')) {
         throw new Error('server must start with "btp+". server=' + this._server)
       }
+
+      // Chrome doesn't parse the URL correctly when using the btp+ prefix
+      const parsedBtpUri = new URL(this._server.substring('btp+'.length))
+      const account = parsedBtpUri.username
+      const token = parsedBtpUri.password
 
       this._ws = new WebSocketReconnector({ interval: this._reconnectInterval })
 
@@ -166,7 +172,7 @@ class AbstractBtpPlugin extends EventEmitter {
         data: Buffer.from(token, 'utf8')
       }]
 
-      this._ws.on('open', async () => {
+      this._ws.on('connect', async () => {
         debug('connected to server')
         await this._call(null, {
           type: BtpPacket.TYPE_MESSAGE,
@@ -176,13 +182,13 @@ class AbstractBtpPlugin extends EventEmitter {
         this.emit('connect')
       })
 
-      this._ws.on('message', this._handleIncomingWsMessage.bind(this, this._ws))
+      this._ws.on('data', this._handleIncomingWsMessage.bind(this, this._ws))
 
       // CAUTION: Do not delete the following two lines, they have the side-effect
-      // of removing the 'user@pass:' part from parsedBtpUri.toString()!
-      parsedBtpUri.account = ''
+      // of removing the 'user:pass@' part from parsedBtpUri.toString()!
+      parsedBtpUri.username = ''
       parsedBtpUri.password = ''
-      const wsUri = parsedBtpUri.toString().substring('btp+'.length)
+      const wsUri = parsedBtpUri.toString()
 
       await this._ws.open(wsUri)
     }
@@ -202,7 +208,7 @@ class AbstractBtpPlugin extends EventEmitter {
 
   async _closeIncomingSocket (socket) {
     socket.removeAllListeners()
-    socket.once('message', () => {
+    socket.once('data', () => {
       try {
         ws.send(BtpPacket.serializeError({
           code: 'F00',
@@ -223,9 +229,9 @@ class AbstractBtpPlugin extends EventEmitter {
       await this._disconnect()
     }
 
-    if (this._ws) this._ws.close()
+    if (this._ws) this._ws.destroy()
     if (this._incomingWs) {
-      this._incomingWs.close()
+      this._incomingWs.destroy()
       this._incomingWs = null
     }
     if (this._wss) this._wss.close()
@@ -241,7 +247,7 @@ class AbstractBtpPlugin extends EventEmitter {
       btpPacket = BtpPacket.deserialize(binaryMessage)
     } catch (err) {
       debug('deserialization error:', err)
-      ws.close()
+      ws.destroy()
     }
 
     debug(`processing btp packet ${JSON.stringify(btpPacket)}`)
@@ -427,7 +433,10 @@ class AbstractBtpPlugin extends EventEmitter {
     const ws = this._ws || this._incomingWs
 
     try {
-      await new Promise((resolve) => ws.send(BtpPacket.serialize(btpPacket), resolve))
+      await new Promise((resolve) => {
+        ws.send(BtpPacket.serialize(btpPacket))
+        resolve()
+      })
     } catch (e) {
       debug('unable to send btp message to client: ' + e.message, 'btp packet:', JSON.stringify(btpPacket))
     }
