@@ -1,4 +1,4 @@
-const WebSocket = require('ws')
+const WebSocket = require('simple-websocket')
 const debug = require('debug')('ilp-ws-reconnect')
 const EventEmitter2 = require('eventemitter2')
 const DEFAULT_RECONNECT_INTERVAL = 5000
@@ -12,15 +12,14 @@ class WebSocketReconnector extends EventEmitter2 {
   open (url) {
     this._url = url
     this._instance = new WebSocket(this._url)
-    this._instance.on('open', () => void this.emit('open'))
+    this._instance.on('connect', () => void this.emit('connect'))
     this._instance.on('close', (err) => this._reconnect(err))
     this._instance.on('error', (err) => this._reconnect(err))
-    this._instance.on('message', (data, flags) => void this.emit('message', data, flags))
+    this._instance.on('data', (data, flags) => void this.emit('data', data, flags))
   }
 
-  // uses callback to match normal ws api
-  send (data, callback) {
-    return this._instance.send(data, callback)
+  send (data) {
+    return this._instance.send(data)
   }
 
   _reconnect (code) {
@@ -32,9 +31,9 @@ class WebSocketReconnector extends EventEmitter2 {
     }, this._interval)
   }
 
-  close () {
+  destroy () {
     this._instance.removeAllListeners()
-    return this._instance.close()
+    return this._instance.destroy()
   }
 }
 

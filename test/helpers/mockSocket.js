@@ -14,34 +14,30 @@ class MockSocket extends EventEmitter {
     this.error = null
   }
 
-  send (data, opts, cb) {
+  send (data) {
     setImmediate(() => { // emulates that sending data is asynchronous
-      cb() // called because sending is finished
+      const btpEnvelope = btp.deserialize(data)
+      const handler = this.responses.shift()
 
-      setImmediate(() => { // emulates that receiving a response is asynchronous
-        const btpEnvelope = btp.deserialize(data)
-        const handler = this.responses.shift()
+      if (!handler) {
+        throw new Error('Missing mock request handler. ' +
+          'Add request handlers with mockSocket.reply().')
+      }
+      try {
+        const response = handler(btpEnvelope)
+        if (response) {
+          this.emit('data', response)
+        }
+      } catch (err) {
+        this.error = err
+        if (this.failure) {
+          this.failure(err)
+        } else { throw err }
+      }
 
-        if (!handler) {
-          throw new Error('Missing mock request handler. ' +
-            'Add request handlers with mockSocket.reply().')
-        }
-        try {
-          const response = handler(btpEnvelope)
-          if (response) {
-            this.emit('message', response)
-          }
-        } catch (err) {
-          this.error = err
-          if (this.failure) {
-            this.failure(err)
-          } else { throw err }
-        }
-
-        if (this.responses.length === 0) {
-          this.success && this.success()
-        }
-      })
+      if (this.responses.length === 0) {
+        this.success && this.success()
+      }
     })
   }
 
@@ -102,7 +98,7 @@ class MockSocket extends EventEmitter {
     return this.processed
   }
 
-  close () {}
+  destroy () {}
 }
 
 module.exports = MockSocket
