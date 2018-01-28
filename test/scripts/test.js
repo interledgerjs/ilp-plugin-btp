@@ -7,7 +7,7 @@ const server = new BtpPlugin({
   }
 })
 const client = new BtpPlugin({
-  server: 'btp+ws://:secret@localhost:9000'
+  server: 'btp+ws://user:secret@localhost:9000'
 })
 
 async function run () {

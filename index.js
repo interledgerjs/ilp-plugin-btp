@@ -5,7 +5,7 @@ const debug = require('debug')('ilp-plugin-btp')
 const crypto = require('crypto')
 const EventEmitter = require('events').EventEmitter
 const URL = require('url').URL
-const WebSocket = require('ws')
+const WebSocket = require('uws')
 const WebSocketReconnector = require('./ws-reconnect')
 const BtpPacket = require('btp-packet')
 
@@ -96,7 +96,7 @@ class AbstractBtpPlugin extends EventEmitter {
 
         ws.once('message', async (binaryAuthMessage) => {
           try {
-            authPacket = BtpPacket.deserialize(binaryAuthMessage)
+            authPacket = BtpPacket.deserialize(Buffer.from(binaryAuthMessage))
             debug('got auth packet. packet=%j', authPacket)
             assert.equal(authPacket.type, BtpPacket.TYPE_MESSAGE, 'First message sent over BTP connection must be auth packet')
             assert(authPacket.data.protocolData.length >= 2, 'Auth packet must have auth and auth_token subprotocols')
@@ -180,7 +180,7 @@ class AbstractBtpPlugin extends EventEmitter {
 
       // CAUTION: Do not delete the following two lines, they have the side-effect
       // of removing the 'user@pass:' part from parsedBtpUri.toString()!
-      parsedBtpUri.account = ''
+      parsedBtpUri.username = ''
       parsedBtpUri.password = ''
       const wsUri = parsedBtpUri.toString().substring('btp+'.length)
 
@@ -238,7 +238,7 @@ class AbstractBtpPlugin extends EventEmitter {
   async _handleIncomingWsMessage (ws, binaryMessage) {
     let btpPacket
     try {
-      btpPacket = BtpPacket.deserialize(binaryMessage)
+      btpPacket = BtpPacket.deserialize(Buffer.from(binaryMessage))
     } catch (err) {
       debug('deserialization error:', err)
       ws.close()
@@ -427,7 +427,7 @@ class AbstractBtpPlugin extends EventEmitter {
     const ws = this._ws || this._incomingWs
 
     try {
-      await new Promise((resolve) => ws.send(BtpPacket.serialize(btpPacket), resolve))
+      ws.send(BtpPacket.serialize(btpPacket))
     } catch (e) {
       debug('unable to send btp message to client: ' + e.message, 'btp packet:', JSON.stringify(btpPacket))
     }

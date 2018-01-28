@@ -1,4 +1,4 @@
-const WebSocket = require('ws')
+const WebSocket = require('uws')
 const debug = require('debug')('ilp-ws-reconnect')
 const EventEmitter2 = require('eventemitter2')
 const DEFAULT_RECONNECT_INTERVAL = 5000
@@ -24,7 +24,7 @@ class WebSocketReconnector extends EventEmitter2 {
   }
 
   _reconnect (code) {
-    debug(`websocket disconnected with ${code}; reconnect in ${this._interval}`)
+    debug(`websocket disconnected with ${JSON.stringify(code)}; reconnect in ${this._interval}`)
     this._connected = false
     this._instance.removeAllListeners()
     setTimeout(() => {
