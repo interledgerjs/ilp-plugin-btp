@@ -386,7 +386,7 @@ class AbstractBtpPlugin extends EventEmitter {
   }
 
   async _handleMoney (from, {requestId, data}) {
-    throw new Error('No sendMoney functionality is included in this module')
+    return await this._moneyHandler(data)
   }
 
   registerDataHandler (handler) {
