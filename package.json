@@ -4,25 +4,45 @@
   "description": "Generic BTP plugin for ILP",
   "main": "index.js",
   "scripts": {
+    "build": "tsc",
     "test": "DEBUG=ilp* node test/scripts/test.js",
-    "lint": "eslint ."
+    "prepare": "npm run build",
+    "pretest": "npm run build",
+    "lint": "tslint --project .",
+    "codecov": "codecov",
+    "doc": "typedoc --options typedoc.js src",
+    "publish-docs": "npm run doc && node scripts/publish-docs.js"
   },
+  "files": [
+    "src/*.js",
+    "src/*.js.map",
+    "src/*.d.ts"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/debug": "0.0.30",
+    "@types/node": "^8.9.4",
+    "@types/ws": "^4.0.1",
     "base64url": "^2.0.0",
     "btp-packet": "^1.2.0",
     "debug": "^3.1.0",
     "eventemitter2": "^5.0.0",
+    "ilp-compat-plugin": "^2.0.3",
     "ws": "^3.3.3"
   },
   "devDependencies": {
-    "eslint": "^4.14.0",
-    "eslint-config-standard": "^11.0.0-beta.0",
-    "eslint-plugin-import": "^2.8.0",
-    "eslint-plugin-node": "^5.2.1",
-    "eslint-plugin-promise": "^3.6.0",
-    "eslint-plugin-standard": "^3.0.1",
-    "ilp-packet": "^2.1.2"
+    "@types/lodash": "^4.14.104",
+    "@types/long": "^3.0.32",
+    "chai": "^4.1.2",
+    "codecov": "^3.0.0",
+    "gh-pages": "^1.1.0",
+    "ilp-packet": "^2.1.2",
+    "source-map-support": "^0.5.0",
+    "ts-node": "^4.1.0",
+    "tslint": "^5.8.0",
+    "tslint-config-standard": "^7.0.0",
+    "typedoc": "^0.9.0",
+    "typescript": "^2.6.2"
   }
 }
