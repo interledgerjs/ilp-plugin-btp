@@ -16,6 +16,7 @@ class WebSocketReconnector extends EventEmitter2 {
     this._instance.on('close', (err) => this._reconnect(err))
     this._instance.on('error', (err) => this._reconnect(err))
     this._instance.on('message', (data, flags) => void this.emit('message', data, flags))
+    return new Promise((resolve) => void this.once('open', resolve))
   }
 
   // uses callback to match normal ws api
