@@ -2,7 +2,6 @@
 
 const assert = require('assert')
 const BtpPlugin = require('..')
-const IlpPacket = require('ilp-packet')
 
 describe('constructor', function () {
   beforeEach(async function () {
@@ -33,21 +32,12 @@ describe('constructor', function () {
       assert.strictEqual(this.client.isConnected(), true)
 
       this.server.registerDataHandler((ilp) => {
-        assert.equal(IlpPacket.deserializeIlpPacket(ilp).typeString, 'ilp_prepare')
-        return IlpPacket.serializeIlpFulfill({
-          fulfillment: Buffer.alloc(32),
-          data: Buffer.from('hello world again')
-        })
+        assert.deepEqual(ilp, Buffer.from('foo'))
+        return Buffer.from('bar')
       })
 
-      const response = await this.client.sendData(IlpPacket.serializeIlpPrepare({
-        amount: '10',
-        expiresAt: new Date(),
-        executionCondition: Buffer.alloc(32),
-        destination: 'peer.example',
-        data: Buffer.from('hello world')
-      }))
-      assert.equal(IlpPacket.deserializeIlpPacket(response).typeString, 'ilp_fulfill')
+      const response = await this.client.sendData(Buffer.from('foo'))
+      assert.deepEqual(response, Buffer.from('bar'))
     })
 
     it('client retries if first connect fails', async function () {
