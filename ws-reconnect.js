@@ -1,3 +1,5 @@
+'use strict'
+
 const WebSocket = require('ws')
 const debug = require('debug')('ilp-ws-reconnect')
 const EventEmitter2 = require('eventemitter2')
@@ -37,7 +39,7 @@ class WebSocketReconnector extends EventEmitter2 {
   close () {
     this._instance.removeAllListeners()
     this.emit('close')
-    return this._instance.close()
+    this._instance.close()
   }
 }
 
