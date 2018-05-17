@@ -85,7 +85,7 @@ export interface IlpPluginBtpConstructorOptions {
   reconnectInterval?: number
 }
 
-interface IlpPluginBtpConstructorModules {
+export interface IlpPluginBtpConstructorModules {
   log?: {
     debug(formatter: any, ...args: any[]): void
   },
@@ -125,7 +125,7 @@ export interface ConnectDisconnectHandler {
  * ILP address of the peer and `btpPacket` is the parsed BTP packet.
  */
 export default class AbstractBtpPlugin extends EventEmitter2 {
-  static public version = 2
+  public static version = 2
 
   protected _connect: ConnectDisconnectHandler
   protected _disconnect: ConnectDisconnectHandler
@@ -134,8 +134,8 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
 
   private _dataHandler?: DataHandler
   private _moneyHandler?: MoneyHandler
-  private _readyState: ReadyState = STATE_INITIAL
-  private _debug: (formatter: any, ...args: any[])
+  private _readyState: ReadyState = ReadyState.STATE_INITIAL
+  private _debug: (formatter: any, ...args: any[]) => void
 
   // Server
   private _listener?: {
@@ -158,11 +158,11 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
     this._debug = (modules && modules.log && modules.log.debug) || debug
   }
   async connect () {
-    if (this._readyState > STATE_INITIAL) {
+    if (this._readyState > ReadyState.STATE_INITIAL) {
       return
     }
 
-    this._readyState = STATE_CONNECTING
+    this._readyState = ReadyState.STATE_CONNECTING
 
     if (this._listener) {
       const wss = this._wss = new WebSocket.Server({ port: this._listener.port })
@@ -291,7 +291,7 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
       await this._connect()
     }
 
-    this._readyState = STATE_READY_TO_EMIT
+    this._readyState = ReadyState.STATE_READY_TO_EMIT
     this._emitConnect()
   }
 
@@ -328,7 +328,7 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
   }
 
   isConnected () {
-    return this._readyState === STATE_CONNECTED
+    return this._readyState === ReadyState.STATE_CONNECTED
   }
 
   async _handleIncomingWsMessage (ws: WebSocket, binaryMessage: WebSocket.Data) {
@@ -433,14 +433,6 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
     this._moneyHandler = undefined
   }
 
-  protocolDataToIlpAndCustom (packet: BtpPacketData) {
-    return protocolDataToIlpAndCustom(packet)
-  }
-
-  ilpAndCustomToProtocolData (obj: { ilp?: Buffer, custom?: Object , protocolMap?: Map<string, Buffer | string | Object> }) {
-    return ilpAndCustomToProtocolData(obj)
-  }
-
   protected async _call (to: string, btpPacket: BtpPacket): Promise<BtpPacketData> {
     const requestId = btpPacket.requestId
 
@@ -543,7 +535,7 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
     }
   }
 
-  protocolDataToIlpAndCustom (packet: { protocolData: Array<BtpSubProtocol> }) {
+  protocolDataToIlpAndCustom (packet: BtpPacketData) {
     return protocolDataToIlpAndCustom(packet)
   }
 
@@ -552,23 +544,23 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
   }
 
   _emitDisconnect () {
-    if (this._readyState !== STATE_DISCONNECTED) {
-      this._readyState = STATE_DISCONNECTED
+    if (this._readyState !== ReadyState.STATE_DISCONNECTED) {
+      this._readyState = ReadyState.STATE_DISCONNECTED
       this.emit('disconnect')
     }
   }
 
   _emitConnect () {
-    if (this._readyState === STATE_CONNECTING) {
+    if (this._readyState === ReadyState.STATE_CONNECTING) {
       this.emit('_first_time_connect')
-    } else if (this._readyState === STATE_READY_TO_EMIT || this._readyState === STATE_DISCONNECTED) {
-      this._readyState = STATE_CONNECTED
+    } else if (this._readyState === ReadyState.STATE_READY_TO_EMIT || this._readyState === ReadyState.STATE_DISCONNECTED) {
+      this._readyState = ReadyState.STATE_CONNECTED
       this.emit('connect')
     }
   }
 }
 
-export function _requestId (): Promise<number> {
+function _requestId (): Promise<number> {
   return new Promise<number>((resolve, reject) => {
     crypto.randomBytes(4, (err, buf) => {
       if (err) return reject(err)
