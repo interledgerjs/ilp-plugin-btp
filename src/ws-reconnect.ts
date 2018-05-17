@@ -3,6 +3,8 @@ import * as Debug from 'debug'
 import { EventEmitter2 } from 'eventemitter2'
 const debug = Debug('ilp-ws-reconnect')
 
+const DEFAULT_RECONNECT_INTERVAL = 5000
+
 export interface WebSocketReconnectorConstructorOptions {
   interval?: number
 }
