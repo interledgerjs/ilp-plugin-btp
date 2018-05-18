@@ -2,10 +2,10 @@
   "name": "ilp-plugin-btp",
   "version": "1.1.11",
   "description": "Generic BTP plugin for ILP",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "build": "tsc",
-    "test": "mocha ./test/indexSpec.js",
+    "test": "mocha ./test/index.test.js",
     "prepare": "npm run build",
     "pretest": "npm run build",
     "lint": "tslint --project .",
@@ -33,7 +33,6 @@
   "devDependencies": {
     "@types/lodash": "^4.14.104",
     "@types/long": "^3.0.32",
-    "chai": "^4.1.2",
     "codecov": "^3.0.0",
     "gh-pages": "^1.1.0",
     "mocha": "^5.1.1",
