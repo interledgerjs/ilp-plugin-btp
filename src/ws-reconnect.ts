@@ -5,25 +5,31 @@ const debug = Debug('ilp-ws-reconnect')
 
 const DEFAULT_RECONNECT_INTERVAL = 5000
 
+export interface WebSocketConstructor {
+  new (url: string): WebSocket
+}
+
 export interface WebSocketReconnectorConstructorOptions {
   interval?: number
+  WebSocket: WebSocketConstructor
 }
 
 export class WebSocketReconnector extends EventEmitter2 {
-
   private _interval: number
   private _url: string
   private _instance: WebSocket
   private _connected: boolean
+  private WebSocket: WebSocketConstructor
 
   constructor (options: WebSocketReconnectorConstructorOptions) {
     super()
     this._interval = options.interval || DEFAULT_RECONNECT_INTERVAL
+    this.WebSocket = options.WebSocket
   }
 
   open (url: string) {
     this._url = url
-    this._instance = new WebSocket(this._url)
+    this._instance = new (this.WebSocket)(this._url)
     this._instance.on('open', () => void this.emit('open'))
     this._instance.on('close', (code: number, reason: string) => this._reconnect(code))
     this._instance.on('error', (err: Error) => this._reconnect(err))
@@ -47,7 +53,7 @@ export class WebSocketReconnector extends EventEmitter2 {
     this._connected = false
     this._instance.removeAllListeners()
     setTimeout(() => {
-      this.open(this._url)
+      void this.open(this._url)
     }, this._interval)
     this.emit('close')
   }

@@ -1,4 +1,4 @@
-import { BtpSubProtocol, BtpPacket } from '.'
+import { BtpSubProtocol } from '.'
 const Btp = require('btp-packet')
 
 export function protocolDataToIlpAndCustom (data: { protocolData: Array<BtpSubProtocol> }) {
@@ -26,14 +26,14 @@ export function protocolDataToIlpAndCustom (data: { protocolData: Array<BtpSubPr
 
 export function ilpAndCustomToProtocolData (data: { ilp?: Buffer, custom?: Object , protocolMap?: Map<string, Buffer | string | Object> }): Array<BtpSubProtocol> {
   const protocolData = []
-  const {ilp, custom, protocolMap} = data
+  const { ilp, custom, protocolMap } = data
 
   // ILP is always the primary protocol when it's specified
   if (ilp) {
     protocolData.push({
       protocolName: 'ilp',
       contentType: Btp.MIME_APPLICATION_OCTET_STREAM,
-      //TODO JS originally had a Buffer.from(ilp, 'base64')?
+      // TODO JS originally had a Buffer.from(ilp, 'base64')?
       data: ilp
     })
   }
