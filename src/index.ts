@@ -210,10 +210,6 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
 
     /* Server logic. */ 
     if (this._listener) {
-      /* Quick typescript note on what is going on here. We are instantiating a
-       * new Websocket.Server instance. The below is an IIFE:
-       * this.WebSocketServer is a constructor function with the object
-       * containing port representing Websocket.ServerOptions. */
       const wss = this._wss = new (this.WebSocketServer)({ port: this._listener.port })
       this._incomingWs = undefined
 
