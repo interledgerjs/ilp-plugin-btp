@@ -233,7 +233,7 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
   /* tslint:disable-next-line:no-empty */
   protected async _disconnect (): Promise<void> {}
 
-  /* 
+  /** 
    * Connect to another BTP-based ledger plugin if the instance is not already
    * connected/connecting to another plugin. 
    *
@@ -670,9 +670,11 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
     })
   }
 
-  /* Receive a BTP packet, and convert it to ILP format. Handle the ILP data
-   * with the regsistered data handler, and then convert it back to BTP
-   * structure and send a response. E.g. for prepare, fulfill, and reject packets. */
+  /** 
+   * Called after receiving btp packet of type message. First convert it to ILP
+   * format, then handle the ILP data with the regsistered data handler, and then convert it back to BTP
+   * structure and send a response. E.g. for prepare, fulfill, and reject packets. 
+   */
   protected async _handleData (from: string, btpPacket: BtpPacket): Promise<Array<BtpSubProtocol>> {
     const { data } = btpPacket
     const { ilp } = protocolDataToIlpAndCustom(data) /* Defined in protocol-data-converter.ts. */
@@ -685,7 +687,9 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
     return ilpAndCustomToProtocolData({ ilp: response })
   }
 
-  /* Need to fully define on you own. */
+  /** 
+   * Need to fully define on you own. 
+   */
   protected async _handleMoney (from: string, btpPacket: BtpPacket): Promise<Array<BtpSubProtocol>> {
     throw new Error('No sendMoney functionality is included in this module')
   }
