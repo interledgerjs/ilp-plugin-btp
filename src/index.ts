@@ -239,10 +239,10 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
    *
    * **If the BTP instance is acting as a server:** 
    *
-   * It creates a new server on the * specified `port` from `this.listener`. 
-   * It creates an event listener for * `connection`. When a connection 
-   * is established, listeners for `close`, * `error`, and `message` are 
-   * added. The listeners for close and error call * `emitDisconnect()`. 
+   * It creates a new server on the specified `port` from `this.listener`. 
+   * It creates an event listener for `connection`. When a connection 
+   * is established, listeners for `close`, `error`, and `message` are 
+   * added. The listeners for close and error call `emitDisconnect()`. 
    *
    * There are two listeners for `message` events. First:
    * Uses socket.once to add a one time listener for the event. The
