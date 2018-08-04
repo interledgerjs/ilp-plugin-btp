@@ -10,7 +10,8 @@
     "inlineSources": true,
     "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": true,
+    "allowUnreachableCode": true
   },
   "types": [],
-  "compileOnSave": true,
+  "compileOnSave": true
 }
