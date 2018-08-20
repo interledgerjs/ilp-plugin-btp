@@ -23,27 +23,27 @@
   "license": "ISC",
   "dependencies": {
     "@types/debug": "0.0.30",
-    "@types/node": "^8.9.4",
-    "@types/ws": "^4.0.1",
+    "@types/node": "^10.7.1",
+    "@types/ws": "^6.0.0",
     "base64url": "^3.0.0",
     "btp-packet": "^1.2.1",
     "debug": "^3.1.0",
     "eventemitter2": "^5.0.0",
     "ilp-compat-plugin": "^2.0.3",
     "ilp-logger": "^1.0.1",
-    "ws": "^3.3.3"
+    "ws": "^6.0.0"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.104",
-    "@types/long": "^3.0.32",
+    "@types/long": "^4.0.0",
     "codecov": "^3.0.0",
     "gh-pages": "^1.1.0",
     "mocha": "^5.1.1",
     "source-map-support": "^0.5.0",
-    "ts-node": "^4.1.0",
+    "ts-node": "^7.0.1",
     "tslint": "^5.8.0",
     "tslint-config-standard": "^7.0.0",
-    "typedoc": "^0.9.0",
-    "typescript": "^2.6.2"
+    "typedoc": "^0.12.0",
+    "typescript": "^3.0.1"
   }
 }
