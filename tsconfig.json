@@ -9,8 +9,7 @@
     "sourceMap": true,
     "inlineSources": true,
     "strictNullChecks": true,
-    "suppressImplicitAnyIndexErrors": true,
-    "allowUnreachableCode": true
+    "suppressImplicitAnyIndexErrors": true
   },
   "types": [],
   "compileOnSave": true

@@ -87,7 +87,6 @@ function generatePacketDataTracer (packetData: BtpPacketData) {
           switch (data.protocolName) {
             case 'ilp':
               return ILP_PACKET_TYPES[data.data[0]] || ('ilp-' + data.data[0])
-              break
             default:
               return subProtocolToString(data)
           }
