@@ -3,7 +3,6 @@ import * as crypto from 'crypto'
 import * as Debug from 'debug'
 import * as WebSocket from 'ws'
 import { WebSocketReconnector, WebSocketConstructor } from './ws-reconnect'
-import { DataHandler, MoneyHandler } from 'ilp-compat-plugin'
 import { EventEmitter2, Listener } from 'eventemitter2'
 import { URL } from 'url'
 import { protocolDataToIlpAndCustom, ilpAndCustomToProtocolData } from './protocol-data-converter'
@@ -11,6 +10,9 @@ import { protocolDataToIlpAndCustom, ilpAndCustomToProtocolData } from './protoc
 const BtpPacket = require('btp-packet')
 
 const debug = require('ilp-logger')('ilp-plugin-btp')
+
+type DataHandler = (data: Buffer) => Promise<Buffer>
+type MoneyHandler = (amount: string) => Promise<void>
 
 enum ReadyState {
   INITIAL = 0,
