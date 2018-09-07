@@ -193,7 +193,7 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
   protected _dataHandler?: DataHandler
   protected _moneyHandler?: MoneyHandler
   private _readyState: ReadyState = ReadyState.INITIAL
-  private _log: any
+  protected _log: any
   private WebSocket: WebSocketConstructor
   private WebSocketServer: WebSocketServerConstructor
 
