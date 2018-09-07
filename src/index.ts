@@ -27,12 +27,12 @@ const namesToCodes = {
   'UnreachableError': 'T00',
   'NotAcceptedError': 'F00',
   'InvalidFieldsError': 'F01',
-  'TransferNotFoundError': 'F02',
-  'InvalidFulfillmentError': 'F03',
-  'DuplicateIdError': 'F04',
-  'AlreadyRolledBackError': 'F05',
-  'AlreadyFulfilledError': 'F06',
-  'InsufficientBalanceError': 'F07'
+  'TransferNotFoundError': 'F03',
+  'InvalidFulfillmentError': 'F04',
+  'DuplicateIdError': 'F05',
+  'AlreadyRolledBackError': 'F06',
+  'AlreadyFulfilledError': 'F07',
+  'InsufficientBalanceError': 'F08'
 }
 
 /**
