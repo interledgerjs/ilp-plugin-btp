@@ -6,6 +6,7 @@ import { WebSocketReconnector, WebSocketConstructor } from './ws-reconnect'
 import { EventEmitter2, Listener } from 'eventemitter2'
 import { URL } from 'url'
 import { protocolDataToIlpAndCustom, ilpAndCustomToProtocolData } from './protocol-data-converter'
+import { IncomingMessage } from 'http'
 
 const BtpPacket = require('btp-packet')
 
@@ -250,8 +251,12 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
     this.WebSocketServer = modules.WebSocketServer || WebSocket.Server
   }
 
+  // Signature necessary for _connect in mini-accounts and its subclasses
+  protected async _connect (address?: string, authPacket?: BtpPacket, opts?: {
+    ws: WebSocket,
+    req: IncomingMessage
   /* tslint:disable-next-line:no-empty */
-  protected async _connect (): Promise<void> {}
+  }): Promise<void> {}
   /* tslint:disable-next-line:no-empty */
   protected async _disconnect (): Promise<void> {}
 
