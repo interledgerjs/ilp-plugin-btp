@@ -257,12 +257,9 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
     this.WebSocketServer = modules.WebSocketServer || WebSocket.Server
   }
 
-  // Signature necessary for _connect in mini-accounts and its subclasses
-  protected async _connect (address?: string, authPacket?: BtpPacket, opts?: {
-    ws: WebSocket,
-    req: IncomingMessage
+  // Required for different _connect signature in mini-accounts and its subclasses
   /* tslint:disable-next-line:no-empty */
-  }): Promise<void> {}
+  protected async _connect (...opts: any[]): Promise<void> {}
   /* tslint:disable-next-line:no-empty */
   protected async _disconnect (): Promise<void> {}
 
