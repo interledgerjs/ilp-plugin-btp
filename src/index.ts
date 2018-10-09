@@ -2,6 +2,7 @@ import * as assert from 'assert'
 import * as crypto from 'crypto'
 import * as Debug from 'debug'
 import * as WebSocket from 'ws'
+import * as http from 'http'
 import { WebSocketReconnector, WebSocketConstructor } from './ws-reconnect'
 import { EventEmitter2, Listener } from 'eventemitter2'
 import { URL } from 'url'
@@ -318,7 +319,15 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
 
     /* Server logic. */
     if (this._listener) {
-      const wss = this._wss = new (this.WebSocketServer)({ port: this._listener.port })
+
+      // http server for health checks
+      const httpServer = http.createServer((req, res) => {
+        res.writeHead(200, { 'Content-Type': 'text/html' })
+        res.write('ok')
+        res.end()
+      }).listen(this._listener.port)
+
+      const wss = this._wss = new (this.WebSocketServer)({ server: httpServer })
       this._incomingWs = undefined
 
       wss.on('connection', (socket: WebSocket) => {
@@ -731,7 +740,7 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
    * error.
    */
   protected async _handleOutgoingBtpPacket (to: string, btpPacket: BtpPacket) {
-    const ws = this._ws || this._incomingWs
+    const ws: any = this._ws || this._incomingWs
 
     const { type, requestId, data } = btpPacket
     const typeString = BtpPacket.typeToString(type)
