@@ -91,6 +91,7 @@ export class WebSocketReconnector extends EventEmitter2 {
     this._instance.on('close', (code: number, reason: string) => this._reconnect(code))
     this._instance.on('error', (err: Error) => this._reconnect(err))
     this._instance.on('message', (data: WebSocket.Data) => void this.emit('message', data))
+    this.once('open', () => this.heartbeat())
     return new Promise((resolve) => void this.once('open', resolve))
   }
 
@@ -107,9 +108,19 @@ export class WebSocketReconnector extends EventEmitter2 {
    * `close ()` would not trigger a reconnect.
    */
   close () {
+    clearTimeout(this._heartbeatTimer)
     this._instance.removeAllListeners()
     this.emit('close')
     this._instance.close()
+  }
+  
+  private _heartbeatTimer?: NodeJS.Timer
+  heartbeat () {
+    clearTimeout(this._heartbeatTimer)
+    if (this._instance && this._instance.readyState == this._instance.OPEN) {
+      this._instance.send('ping')
+      this._heartbeatTimer = setTimeout(() => this.heartbeat(), 5000)
+    }
   }
 
   /**
