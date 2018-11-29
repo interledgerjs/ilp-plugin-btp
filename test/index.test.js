@@ -4,6 +4,8 @@ const assert = require('assert')
 const btp = require('btp-packet')
 const Plugin = require('..')
 const mockSocket = require('./helpers/mockSocket')
+const WebSocket = require('ws');
+
 
 describe('BtpPlugin', function () {
   beforeEach(async function () {
@@ -119,6 +121,47 @@ describe('BtpPlugin', function () {
       assert(date3 - date2 >= 500, 'third reconnect should take at least 500ms')
     })
   })
+
+  describe('can pass in websocket connection', function () {
+
+        beforeEach(async function () {
+            this.client = new Plugin(this.clientOpts)
+        })
+
+
+        afterEach(async function () {
+            await this.client.disconnect()
+        })
+
+        it('get incoming socket connection and intantiate plugin', async function () {
+            const ws = new WebSocket.Server({ port: 9000 })
+
+            ws.on('connection', async (connection) => {
+                console.log('new connection')
+
+                this.server = new Plugin({raw: {socket: connection}})
+
+                await this.server.connect()
+                console.log('connected')
+
+                assert.strictEqual(this.server.isConnected(), true)
+                assert.strictEqual(this.client.isConnected(), true)
+
+                this.server.registerDataHandler((ilp) => {
+                    assert.deepEqual(ilp, Buffer.from('foo'))
+                    return Buffer.from('bar')
+                })
+
+                const response = await this.client.sendData(Buffer.from('foo'))
+                console.log(response)
+                assert.deepEqual(response, Buffer.from('bar'))
+                this.server.disconnect()
+            })
+
+            await this.client.connect()
+
+        })
+})
 
   describe('alternate client account/token config', function () {
     beforeEach(async function () {

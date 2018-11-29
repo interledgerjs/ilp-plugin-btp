@@ -132,6 +132,9 @@ export interface IlpPluginBtpConstructorOptions {
     port: number,
     secret: string
   },
+  raw?: {
+    socket: WebSocket
+  },
   reconnectInterval?: number
   reconnectIntervals?: Array<number>
   reconnectClearTryTimeout?: number
@@ -210,6 +213,10 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
   protected _wss: WebSocket.Server | null = null
   private _incomingWs?: WebSocket
 
+  private _raw?: {
+    socket: WebSocket
+  }
+
   /**
    * Specify for a BTP instance that is acting as a client.
    */
@@ -231,6 +238,7 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
     this._responseTimeout = options.responseTimeout || DEFAULT_TIMEOUT
     this._listener = options.listener
     this._server = options.server
+    this._raw = options.raw
 
     if (this._server) {
       const parsedBtpUri = new URL(this._server)
@@ -418,6 +426,25 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
 
       this._ws.on('close', () => this._emitDisconnect())
       this._ws.on('message', this._handleIncomingWsMessage.bind(this, this._ws))
+    }
+
+    /* Raw WS Login */
+    if (this._raw) {
+      let socket: WebSocket = this._raw.socket
+      this._log.info('got connection')
+
+      socket.on('close', (code: number) => {
+        this._log.info('incoming websocket closed. code=' + code)
+        this._emitDisconnect()
+      })
+
+      socket.on('error', (err: Error) => {
+        this._log.debug('incoming websocket error. error=', err)
+        this._emitDisconnect()
+      })
+
+      socket.on('message', this._handleIncomingWsMessage.bind(this, socket))
+      this._emitConnect()
     }
 
     await new Promise((resolve, reject) => {
