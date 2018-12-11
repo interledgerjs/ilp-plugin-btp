@@ -1,5 +1,6 @@
 'use strict'
 
+const BtpPacket = require('btp-packet');
 const assert = require('assert')
 const btp = require('btp-packet')
 const Plugin = require('..')
@@ -134,32 +135,43 @@ describe('BtpPlugin', function () {
         })
 
         it('get incoming socket connection and intantiate plugin', async function () {
-            const ws = new WebSocket.Server({ port: 9000 })
+            return new Promise(resolve => {
+                const ws = new WebSocket.Server({ port: 9000 })
+                let clientConnect = null
 
-            ws.on('connection', async (connection) => {
-                console.log('new connection')
 
-                this.server = new Plugin({raw: {socket: connection}})
+                ws.on('connection', async (connection) => {
 
-                await this.server.connect()
-                console.log('connected')
+                    //Manually reply to the auth message
+                    connection.once('message', async (data) => {
+                        const authPacket = BtpPacket.deserialize(data)
+                        connection.send(BtpPacket.serializeResponse(authPacket.requestId, []))
+                    })
 
-                assert.strictEqual(this.server.isConnected(), true)
-                assert.strictEqual(this.client.isConnected(), true)
+                    this.server = new Plugin({raw: {socket: connection}})
 
-                this.server.registerDataHandler((ilp) => {
-                    assert.deepEqual(ilp, Buffer.from('foo'))
-                    return Buffer.from('bar')
+                    await Promise.all([
+                        clientConnect,
+                        this.server.connect()
+                    ])
+
+                    assert.strictEqual(this.server.isConnected(), true)
+                    assert.strictEqual(this.client.isConnected(), true)
+
+                    this.server.registerDataHandler((ilp) => {
+                        assert.deepEqual(ilp, Buffer.from('foo'))
+                        return Buffer.from('bar')
+                    })
+
+                    const response = await this.client.sendData(Buffer.from('foo'))
+                    assert.deepEqual(response, Buffer.from('bar'))
+                    await this.server.disconnect()
+                    ws.close()
+                    resolve()
                 })
 
-                const response = await this.client.sendData(Buffer.from('foo'))
-                console.log(response)
-                assert.deepEqual(response, Buffer.from('bar'))
-                this.server.disconnect()
+                clientConnect = this.client.connect()
             })
-
-            await this.client.connect()
-
         })
 })
 

@@ -447,17 +447,19 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
       this._emitConnect()
     }
 
-    await new Promise((resolve, reject) => {
-      const onDisconnect = () => {
-        if (this._ws) this._ws.close()
-        reject(new Error('connection aborted'))
-      }
-      this.once('disconnect', onDisconnect)
-      this.once('_first_time_connect', () => {
-        this.removeListener('disconnect', onDisconnect)
-        resolve()
+    if (!this._raw) {
+      await new Promise((resolve, reject) => {
+        const onDisconnect = () => {
+          if (this._ws) this._ws.close()
+          reject(new Error('connection aborted'))
+        }
+        this.once('disconnect', onDisconnect)
+        this.once('_first_time_connect', () => {
+          this.removeListener('disconnect', onDisconnect)
+          resolve()
+        })
       })
-    })
+    }
 
     /* To be overriden. */
     await this._connect()
@@ -506,6 +508,7 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
       this._incomingWs.close()
       this._incomingWs = undefined
     }
+    if (this._raw) this._raw.socket.close()
     if (this._wss) this._wss.close()
   }
 
@@ -767,7 +770,7 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
    * error.
    */
   protected async _handleOutgoingBtpPacket (to: string, btpPacket: BtpPacket) {
-    const ws = this._ws || this._incomingWs
+    const ws = this._raw ? this._raw.socket : this._ws || this._incomingWs
 
     const { type, requestId, data } = btpPacket
     const typeString = BtpPacket.typeToString(type)
