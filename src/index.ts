@@ -506,6 +506,7 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
         this._emitConnect()
       })
     } else {
+      this._incomingWs = socket
       socket.on('message', this._handleIncomingWsMessage.bind(this, socket))
       this._emitConnect()
     }
@@ -765,7 +766,7 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
    * error.
    */
   protected async _handleOutgoingBtpPacket (to: string, btpPacket: BtpPacket) {
-    const ws = this._raw ? this._raw.socket : this._ws || this._incomingWs
+    const ws = this._ws || this._incomingWs
 
     const { type, requestId, data } = btpPacket
     const typeString = BtpPacket.typeToString(type)
