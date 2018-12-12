@@ -461,7 +461,7 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
     return this._readyState === ReadyState.CONNECTED
   }
 
-  async _handleConnection (socket: WebSocket, authenticate: boolean) {
+  _handleConnection (socket: WebSocket, authenticate: boolean) {
     this._log.info('got connection')
 
     socket.on('close', (code: number) => {
