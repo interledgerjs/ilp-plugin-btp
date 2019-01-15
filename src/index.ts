@@ -390,9 +390,7 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
     /* Raw WS Login */
     if (this._raw) {
       this._handleConnection(this._raw.socket, false)
-    }
-
-    if (!this._raw) {
+    } else {
       await new Promise((resolve, reject) => {
         const onDisconnect = () => {
           if (this._ws) this._ws.close()
