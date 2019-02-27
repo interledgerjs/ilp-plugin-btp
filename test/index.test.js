@@ -1,9 +1,12 @@
 'use strict'
 
+const BtpPacket = require('btp-packet');
 const assert = require('assert')
 const btp = require('btp-packet')
 const Plugin = require('..')
 const mockSocket = require('./helpers/mockSocket')
+const WebSocket = require('ws');
+
 
 describe('BtpPlugin', function () {
   beforeEach(async function () {
@@ -119,6 +122,58 @@ describe('BtpPlugin', function () {
       assert(date3 - date2 >= 500, 'third reconnect should take at least 500ms')
     })
   })
+
+  describe('can pass in websocket connection', function () {
+
+        beforeEach(async function () {
+            this.client = new Plugin(this.clientOpts)
+        })
+
+
+        afterEach(async function () {
+            await this.client.disconnect()
+        })
+
+        it('get incoming socket connection and intantiate plugin', async function () {
+            return new Promise(resolve => {
+                const ws = new WebSocket.Server({ port: 9000 })
+                let clientConnect = null
+
+
+                ws.on('connection', async (connection) => {
+
+                    //Manually reply to the auth message
+                    connection.once('message', async (data) => {
+                        const authPacket = BtpPacket.deserialize(data)
+                        connection.send(BtpPacket.serializeResponse(authPacket.requestId, []))
+                    })
+
+                    this.server = new Plugin({raw: {socket: connection}})
+
+                    await Promise.all([
+                        clientConnect,
+                        this.server.connect()
+                    ])
+
+                    assert.strictEqual(this.server.isConnected(), true)
+                    assert.strictEqual(this.client.isConnected(), true)
+
+                    this.server.registerDataHandler((ilp) => {
+                        assert.deepEqual(ilp, Buffer.from('foo'))
+                        return Buffer.from('bar')
+                    })
+
+                    const response = await this.client.sendData(Buffer.from('foo'))
+                    assert.deepEqual(response, Buffer.from('bar'))
+                    await this.server.disconnect()
+                    ws.close()
+                    resolve()
+                })
+
+                clientConnect = this.client.connect()
+            })
+        })
+})
 
   describe('alternate client account/token config', function () {
     beforeEach(async function () {

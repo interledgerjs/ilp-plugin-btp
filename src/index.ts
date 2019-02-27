@@ -132,6 +132,9 @@ export interface IlpPluginBtpConstructorOptions {
     port: number,
     secret: string
   },
+  raw?: {
+    socket: WebSocket
+  },
   reconnectInterval?: number
   reconnectIntervals?: Array<number>
   reconnectClearTryTimeout?: number
@@ -211,6 +214,10 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
   protected _wss: WebSocket.Server | null = null
   private _incomingWs?: WebSocket
 
+  private _raw?: {
+    socket: WebSocket
+  }
+
   /**
    * Specify for a BTP instance that is acting as a client.
    */
@@ -232,6 +239,7 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
     this._responseTimeout = options.responseTimeout || DEFAULT_TIMEOUT
     this._listener = options.listener
     this._server = options.server
+    this._raw = options.raw
 
     if (this._listener) {
       this._listenerSecret = Buffer.from(this._listener.secret, 'utf8')
@@ -327,48 +335,7 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
       this._incomingWs = undefined
 
       wss.on('connection', (socket: WebSocket) => {
-        this._log.info('got connection')
-        let authPacket: BtpPacket
-
-        socket.on('close', (code: number) => {
-          this._log.info('incoming websocket closed. code=' + code)
-          this._emitDisconnect()
-        })
-
-        socket.on('error', (err: Error) => {
-          this._log.debug('incoming websocket error. error=', err)
-          this._emitDisconnect()
-        })
-
-        socket.once('message', async (binaryAuthMessage: WebSocket.Data) => {
-          try {
-            authPacket = BtpPacket.deserialize(binaryAuthMessage)
-            this._log.trace('got auth packet. packet=%j', authPacket)
-            this._validateAuthPacket(authPacket)
-            if (this._incomingWs) {
-              this._closeIncomingSocket(this._incomingWs, authPacket)
-            }
-            this._incomingWs = socket
-            socket.send(BtpPacket.serializeResponse(authPacket.requestId, []))
-          } catch (err) {
-            this._incomingWs = undefined
-            if (authPacket) {
-              const errorResponse = BtpPacket.serializeError({
-                code: 'F00',
-                name: 'NotAcceptedError',
-                data: err.message,
-                triggeredAt: new Date().toISOString()
-              }, authPacket.requestId, [])
-              socket.send(errorResponse)
-            }
-            socket.close()
-            return
-          }
-
-          this._log.trace('connection authenticated')
-          socket.on('message', this._handleIncomingWsMessage.bind(this, socket))
-          this._emitConnect()
-        })
+        this._handleConnection(socket, true)
       })
       this._log.info(`listening for BTP connections on ${this._listener.port}`)
     }
@@ -425,17 +392,22 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
       this._ws.on('message', this._handleIncomingWsMessage.bind(this, this._ws))
     }
 
-    await new Promise((resolve, reject) => {
-      const onDisconnect = () => {
-        if (this._ws) this._ws.close()
-        reject(new Error('connection aborted'))
-      }
-      this.once('disconnect', onDisconnect)
-      this.once('_first_time_connect', () => {
-        this.removeListener('disconnect', onDisconnect)
-        resolve()
+    /* Raw WS Login */
+    if (this._raw) {
+      this._handleConnection(this._raw.socket, false)
+    } else {
+      await new Promise((resolve, reject) => {
+        const onDisconnect = () => {
+          if (this._ws) this._ws.close()
+          reject(new Error('connection aborted'))
+        }
+        this.once('disconnect', onDisconnect)
+        this.once('_first_time_connect', () => {
+          this.removeListener('disconnect', onDisconnect)
+          resolve()
+        })
       })
-    })
+    }
 
     /* To be overriden. */
     await this._connect()
@@ -484,11 +456,63 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
       this._incomingWs.close()
       this._incomingWs = undefined
     }
+    if (this._raw) this._raw.socket.close()
     if (this._wss) this._wss.close()
   }
 
   isConnected () {
     return this._readyState === ReadyState.CONNECTED
+  }
+
+  _handleConnection (socket: WebSocket, authenticate: boolean) {
+    this._log.info('got connection')
+
+    socket.on('close', (code: number) => {
+      this._log.info('incoming websocket closed. code=' + code)
+      this._emitDisconnect()
+    })
+
+    socket.on('error', (err: Error) => {
+      this._log.debug('incoming websocket error. error=', err)
+      this._emitDisconnect()
+    })
+
+    if (authenticate) {
+      let authPacket: BtpPacket
+      socket.once('message', async (binaryAuthMessage: WebSocket.Data) => {
+        try {
+          authPacket = BtpPacket.deserialize(binaryAuthMessage)
+          this._log.trace('got auth packet. packet=%j', authPacket)
+          this._validateAuthPacket(authPacket)
+          if (this._incomingWs) {
+            this._closeIncomingSocket(this._incomingWs, authPacket)
+          }
+          this._incomingWs = socket
+          socket.send(BtpPacket.serializeResponse(authPacket.requestId, []))
+        } catch (err) {
+          this._incomingWs = undefined
+          if (authPacket) {
+            const errorResponse = BtpPacket.serializeError({
+              code: 'F00',
+              name: 'NotAcceptedError',
+              data: err.message,
+              triggeredAt: new Date().toISOString()
+            }, authPacket.requestId, [])
+            socket.send(errorResponse)
+          }
+          socket.close()
+          return
+        }
+
+        this._log.trace('connection authenticated')
+        socket.on('message', this._handleIncomingWsMessage.bind(this, socket))
+        this._emitConnect()
+      })
+    } else {
+      this._incomingWs = socket
+      socket.on('message', this._handleIncomingWsMessage.bind(this, socket))
+      this._emitConnect()
+    }
   }
 
   /**
