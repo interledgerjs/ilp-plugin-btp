@@ -137,7 +137,7 @@ export class WebSocketReconnector extends EventEmitter2 {
       global.clearTimeout(this._heartbeatTimer)
     }
 
-    if (this._instance && this._instance.readyState == this._instance.OPEN) {
+    if (this._instance && this._instance.readyState === this._instance.OPEN) {
       this._instance.ping()
       this._heartbeatTimer = setTimeout(() => this.heartbeat(), 5000)
     }
