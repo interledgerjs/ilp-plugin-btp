@@ -43,6 +43,7 @@ export class WebSocketReconnector extends EventEmitter2 {
   private _intervals: Array<number>
   private _clearTryTimeout: number
   private _clearTryTimer?: NodeJS.Timer
+  private _openTimer?: NodeJS.Timer
   private _tries: number
 
   /**
@@ -65,6 +66,11 @@ export class WebSocketReconnector extends EventEmitter2 {
    */
   private WebSocket: WebSocketConstructor
 
+  /**
+   * Send a PING to the WS server at a regular interval
+   */
+  private _heartbeatTimer?: NodeJS.Timer
+
   constructor (options: WebSocketReconnectorConstructorOptions) {
     super()
     this.WebSocket = options.WebSocket
@@ -84,14 +90,9 @@ export class WebSocketReconnector extends EventEmitter2 {
    * Return a promise which resolves when the connection is successfully
    * established (successfully established connection emits `open` event).
    */
-  open (url: string) {
+  open (url: string): Promise<void> {
     this._url = url
-    this._instance = new (this.WebSocket)(this._url)
-    this._instance.on('open', () => void this.emit('open'))
-    this._instance.on('close', (code: number, reason: string) => this._reconnect(code))
-    this._instance.on('error', (err: Error) => this._reconnect(err))
-    this._instance.on('message', (data: WebSocket.Data) => void this.emit('message', data))
-    this.once('open', () => this.heartbeat())
+    this._open()
     return new Promise((resolve) => void this.once('open', resolve))
   }
 
@@ -108,17 +109,36 @@ export class WebSocketReconnector extends EventEmitter2 {
    * `close ()` would not trigger a reconnect.
    */
   close () {
-    clearTimeout(this._heartbeatTimer)
+    if (this._heartbeatTimer) {
+      global.clearTimeout(this._heartbeatTimer)
+    }
+
     this._instance.removeAllListeners()
     this.emit('close')
     this._instance.close()
+
+    if (this._openTimer) clearTimeout(this._openTimer)
+    if (this._clearTryTimer) clearTimeout(this._clearTryTimer)
   }
-  
-  private _heartbeatTimer?: NodeJS.Timer
+
+  private _open () {
+    this._instance = new (this.WebSocket)(this._url)
+    this._instance.on('open', () => {
+      this.emit('open')
+      this.heartbeat()
+    })
+    this._instance.on('close', (code: number, reason: string) => this._reconnect(code))
+    this._instance.on('error', (err: Error) => this._reconnect(err))
+    this._instance.on('message', (data: WebSocket.Data) => void this.emit('message', data))
+  }
+
   heartbeat () {
-    clearTimeout(this._heartbeatTimer)
+    if (this._heartbeatTimer) {
+      global.clearTimeout(this._heartbeatTimer)
+    }
+
     if (this._instance && this._instance.readyState == this._instance.OPEN) {
-      this._instance.send('ping')
+      this._instance.ping()
       this._heartbeatTimer = setTimeout(() => this.heartbeat(), 5000)
     }
   }
@@ -133,8 +153,8 @@ export class WebSocketReconnector extends EventEmitter2 {
     debug.debug(`websocket disconnected with ${codeOrError}; reconnect in ${this._intervals[this._tries]}}`)
     this._connected = false
     this._instance.removeAllListeners()
-    setTimeout(() => {
-      void this.open(this._url)
+    this._openTimer = setTimeout(() => {
+      this._open()
     }, this._intervals[this._tries])
     this._tries = Math.min(this._tries + 1, this._intervals.length - 1)
 
