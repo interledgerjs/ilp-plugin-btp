@@ -8,6 +8,7 @@ const fetch = require('node-fetch')
 const http = require('http')
 
 describe('BtpPlugin', function () {
+
   beforeEach(async function () {
     this.clientOpts = {
       server: 'btp+ws://bob:secret@localhost:9000',
