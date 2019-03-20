@@ -14,7 +14,7 @@
   "scripts": {
     "lint": "tslint --project .",
     "build": "tsc --project .",
-    "test": "mocha ./test/index.test.js --exit",
+    "test": "mocha ./test/index.test.js",
     "codecov": "codecov"
   },
   "author": "Interledger Team <info@interledger.org>",

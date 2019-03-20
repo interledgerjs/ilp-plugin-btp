@@ -110,7 +110,7 @@ export class WebSocketReconnector extends EventEmitter2 {
    */
   close () {
     if (this._heartbeatTimer) {
-      global.clearTimeout(this._heartbeatTimer)
+      clearTimeout(this._heartbeatTimer)
     }
 
     this._instance.removeAllListeners()
@@ -134,7 +134,7 @@ export class WebSocketReconnector extends EventEmitter2 {
 
   heartbeat () {
     if (this._heartbeatTimer) {
-      global.clearTimeout(this._heartbeatTimer)
+      clearTimeout(this._heartbeatTimer)
     }
 
     if (this._instance && this._instance.readyState === this._instance.OPEN) {
