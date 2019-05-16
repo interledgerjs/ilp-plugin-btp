@@ -3,6 +3,7 @@ const createLogger = require('ilp-logger')
 import { EventEmitter2 } from 'eventemitter2'
 const debug = createLogger('ilp-ws-reconnect')
 
+const HEARTBEAT_INTERVAL = 20000
 const DEFAULT_TRY_CLEAR_TIMEOUT = 10000
 const DEFAULT_RECONNECT_INTERVALS = [
   0,
@@ -139,7 +140,7 @@ export class WebSocketReconnector extends EventEmitter2 {
 
     if (this._instance && this._instance.readyState === this._instance.OPEN) {
       this._instance.ping()
-      this._heartbeatTimer = setTimeout(() => this.heartbeat(), 5000)
+      this._heartbeatTimer = setTimeout(() => this.heartbeat(), HEARTBEAT_INTERVAL)
     }
   }
 
