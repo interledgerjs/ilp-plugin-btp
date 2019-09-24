@@ -4,6 +4,9 @@
   "description": "Generic BTP plugin for ILP",
   "main": "index.js",
   "types": "build/index.d.ts",
+  "browser": {
+    "crypto": "./src/browser/crypto.ts"
+  },
   "files": [
     "build/**/*"
   ],
@@ -42,5 +45,8 @@
     "tslint-config-standard": "^7.0.0",
     "typedoc": "^0.12.0",
     "typescript": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=10.0.0"
   }
 }
