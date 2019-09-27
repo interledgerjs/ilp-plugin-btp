@@ -38,7 +38,7 @@ const namesToCodes = {
 
 const toBrowserSafeURL = (btpUrl: string): string => {
   if (!btpUrl.startsWith('btp+')) {
-    throw new Error('server must start with "btp+". server=' + this._server)
+    throw new Error('server must start with "btp+". server=' + btpUrl)
   }
 
   return btpUrl.substring(4)
