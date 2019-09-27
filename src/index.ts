@@ -36,6 +36,14 @@ const namesToCodes = {
   'InsufficientBalanceError': 'F08'
 }
 
+const toBrowserSafeURL = (btpUrl: string): string => {
+  if (!btpUrl.startsWith('btp+')) {
+    throw new Error('server must start with "btp+". server=' + this._server)
+  }
+
+  return btpUrl.substring(4)
+}
+
 /**
  * Returns BTP error code as defined by the BTP ASN.1 spec.
  */
@@ -246,13 +254,11 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
     }
 
     if (this._server) {
-      const parsedBtpUri = new URL(this._server)
+      const browserSafeUrl = toBrowserSafeURL(this._server)
+      const parsedBtpUri = new URL(browserSafeUrl)
       const parsedAccount = parsedBtpUri.username
       const parsedToken = parsedBtpUri.password
 
-      if (!parsedBtpUri.protocol.startsWith('btp+')) {
-        throw new Error('server must start with "btp+". server=' + this._server)
-      }
 
       if ((parsedAccount || parsedToken) && (options.btpAccount || options.btpToken)) {
         throw new Error('account/token must be passed in via constructor or uri, but not both')
@@ -386,7 +392,8 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
 
     /* Client logic. */
     if (this._server) {
-      const parsedBtpUri = new URL(this._server)
+      const browserSafeUrl = toBrowserSafeURL(this._server)
+      const parsedBtpUri = new URL(browserSafeUrl)
       const account = this._btpAccount || ''
       const token = this._btpToken || ''
 
