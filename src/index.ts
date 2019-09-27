@@ -36,12 +36,12 @@ const namesToCodes = {
   'InsufficientBalanceError': 'F08'
 }
 
-const toBrowserSafeURL = (btpUrl: string): string => {
+const toBrowserSafeURL = (btpUrl: string): URL => {
   if (!btpUrl.startsWith('btp+')) {
     throw new Error('server must start with "btp+". server=' + btpUrl)
   }
 
-  return btpUrl.substring(4)
+  return new URL(btpUrl.substring(4))
 }
 
 /**
@@ -254,8 +254,7 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
     }
 
     if (this._server) {
-      const browserSafeUrl = toBrowserSafeURL(this._server)
-      const parsedBtpUri = new URL(browserSafeUrl)
+      const parsedBtpUri = toBrowserSafeURL(this._server)
       const parsedAccount = parsedBtpUri.username
       const parsedToken = parsedBtpUri.password
 
@@ -391,8 +390,7 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
 
     /* Client logic. */
     if (this._server) {
-      const browserSafeUrl = toBrowserSafeURL(this._server)
-      const parsedBtpUri = new URL(browserSafeUrl)
+      const parsedBtpUri = toBrowserSafeURL(this._server)
       const account = this._btpAccount || ''
       const token = this._btpToken || ''
 
@@ -434,9 +432,8 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
       // of removing the 'user@pass:' part from parsedBtpUri.toString()!
       parsedBtpUri.username = ''
       parsedBtpUri.password = ''
-      const wsUri = parsedBtpUri.toString().substring('btp+'.length)
 
-      await this._ws.open(wsUri)
+      await this._ws.open(parsedBtpUri.toString())
 
       this._ws.on('close', () => this._emitDisconnect())
       this._ws.on('message', this._handleIncomingWsMessage.bind(this, this._ws))
