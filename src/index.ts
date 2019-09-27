@@ -259,7 +259,6 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
       const parsedAccount = parsedBtpUri.username
       const parsedToken = parsedBtpUri.password
 
-
       if ((parsedAccount || parsedToken) && (options.btpAccount || options.btpToken)) {
         throw new Error('account/token must be passed in via constructor or uri, but not both')
       }
