@@ -193,7 +193,7 @@ describe('BtpPlugin', function () {
         btpToken: 'secret',
         reconnectInterval: 100,
         responseTimeout: 100,
-        flags: { foo: 123 }
+        btpAuthFlags: { foo: 123 }
       })
       let gotFlags
       this.server._connect = (flags) => { gotFlags = flags }

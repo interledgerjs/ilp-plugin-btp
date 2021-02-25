@@ -148,7 +148,7 @@ export interface IlpPluginBtpConstructorOptions {
   responseTimeout?: number
   btpAccount?: string
   btpToken?: string
-  flags?: Record<string, string | Buffer | Object>
+  btpAuthFlags?: Record<string, string | Buffer | Object>
 }
 
 export interface WebSocketServerConstructor {
@@ -266,7 +266,7 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
 
       this._btpToken = parsedToken || options.btpToken || ''
       this._btpAccount = parsedAccount || options.btpAccount || ''
-      this._flags = options.flags
+      this._flags = options.btpAuthFlags
     }
 
     modules = modules || {}
