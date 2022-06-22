@@ -32,14 +32,6 @@ jobs:
             - "node-v1-"
 
       - run:
-          name: Install Greenkeeper-Lockfile
-          command: npm install -g greenkeeper-lockfile
-
-      - run:
-          name: Update Lockfile (Greenkeeper)
-          command: greenkeeper-lockfile-update
-
-      - run:
           name: Install
           command: npm install
 
@@ -57,10 +49,6 @@ jobs:
 #      - run:
 #          name: Integration Test
 #          command: if git log -1 --pretty=%B | grep -qF "[skip tests]"; then true; else npm run integration; fi
-
-      - run:
-          name: Upload Lockfile (Greenkeeper)
-          command: greenkeeper-lockfile-upload
 
       - save_cache:
           paths:
