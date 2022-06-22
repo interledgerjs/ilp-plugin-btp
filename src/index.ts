@@ -5,7 +5,7 @@ import * as WebSocket from 'ws'
 import * as http from 'http'
 import * as https from 'https'
 import { WebSocketReconnector, WebSocketConstructor } from './ws-reconnect'
-import { EventEmitter2, Listener } from 'eventemitter2'
+import { EventEmitter2, Listener, ListenerFn } from 'eventemitter2'
 import { protocolDataToIlpAndCustom, ilpAndCustomToProtocolData } from './protocol-data-converter'
 
 const BtpPacket = require('btp-packet')
@@ -649,10 +649,10 @@ export default class AbstractBtpPlugin extends EventEmitter2 {
   protected async _call (to: string, btpPacket: BtpPacket): Promise<BtpPacketData> {
     const requestId = btpPacket.requestId
 
-    let callback: Listener
+    let callback: ListenerFn
     let timer: NodeJS.Timer
     const response = new Promise<BtpPacketData>((resolve, reject) => {
-      callback = (type: number, data: BtpPacketData) => {
+      callback = (type: number, data: BtpPacketData)  => {
         switch (type) {
           case BtpPacket.TYPE_RESPONSE:
             resolve(data)
