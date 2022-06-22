@@ -6,9 +6,9 @@
     ],
     "parser": "@typescript-eslint/parser",
     "rules": {
-        "no-undef": "off",
-        "prefer-rest-params": "off",
-        "prefer-spread": "off"
+        "no-undef": "warn",
+        "prefer-rest-params": "warn",
+        "prefer-spread": "warn"
     },
     "ignorePatterns": [
         "test/**/*",
@@ -21,13 +21,13 @@
                 "*.js"
             ],
             "rules": {
-                "@typescript-eslint/no-empty-function": "off",
-                "@typescript-eslint/no-non-null-assertion": "off",
-                "@typescript-eslint/no-var-requires": "off",
-                "@typescript-eslint/no-unused-vars": "off",
-                "@typescript-eslint/no-explicit-any": "off",
+                "@typescript-eslint/no-empty-function": "warn",
+                "@typescript-eslint/no-non-null-assertion": "warn",
+                "@typescript-eslint/no-var-requires": "warn",
+                "@typescript-eslint/no-unused-vars": "warn",
+                "@typescript-eslint/no-explicit-any": "warn",
                 "@typescript-eslint/ban-types": [
-                    "off",
+                    "warn",
                     {
                         "extendDefaults": true
                     }
