@@ -16,7 +16,7 @@
     "url": "git+https://github.com/interledgerjs/ilp-plugin-btp.git"
   },
   "scripts": {
-    "prettier": "prettier --write 'src/*.ts' 'src/*/*.ts' 'test/*/*.js' 'test/*.js'",
+    "prettier": "prettier --write 'src/**/*.ts' 'test/**/*.js'",
     "lint": "eslint . --ext .js,.ts",
     "build": "tsc --project .",
     "test": "jest ./test/index.test.js",
